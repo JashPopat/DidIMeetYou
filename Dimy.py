@@ -15,8 +15,8 @@ def task_1_heartbeat(t, k, n):
         print(f"\n[Task 1] Generated New 32-Byte EphID: {ephid.hex()[:10]}...")
 
         # Task 2: Split into n shares (Logic to be written in crypto_utils)
-        # shares = crypto_utils.split_id(ephid, k, n)
-        # print(f"[Task 2] Generated {n} shares using k={k}")
+        shares, ephid_hash = crypto_utils.get_shares_for_broadcast(ephid, k, n)
+        print(f"[Task 2] Generated {n} shares (k={k}). Verification Hash: {ephid_hash}")
 
         # Task 3: Trigger the UDP broadcast of these shares 
         # (This will be another thread or function call)

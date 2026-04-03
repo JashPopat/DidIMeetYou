@@ -13,3 +13,6 @@ SHARE_BROADCAST_INTERVAL = 3   # seconds
 
 #each node stores at most 6 DBFs
 MAX_DBFS = 6
+
+# We need a large Prime for the finite field (Mersenne prime)
+PRIME = 2**521 - 1 
