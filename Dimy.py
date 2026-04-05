@@ -4,19 +4,27 @@ import threading
 from config import *
 import crypto_utils
 import udp_handler
-
+current_ephid      = None
+current_ephid_lock = threading.Lock()
+pending_encids      = []
+pending_encids_lock = threading.Lock()
+own_ephid_hashes = set()
 def task_1_heartbeat(t, k, n):
     """
     This loop runs in the background, generating a new EphID 
     every 't' seconds and passing it to the secret sharing logic.
     """
+    global current_ephid
     while True:
         # Task 1: Generate 32-Byte EphID
         ephid = crypto_utils.generate_ephid()
+        with current_ephid_lock:
+            current_ephid = ephid
         print(f"\n[Task 1] Generated New 32-Byte EphID: {ephid.hex()[:10]}...")
 
         # Task 2: Split into n shares (Logic to be written in crypto_utils)
         shares, ephid_hash = crypto_utils.get_shares_for_broadcast(ephid, k, n)
+        own_ephid_hashes.add(ephid_hash)
         print(f"[Task 2] Generated {n} shares (k={k}). Verification Hash: {ephid_hash}")
 
         # Task 3: Trigger the UDP broadcast of these shares 
@@ -49,9 +57,12 @@ def main():
         print("Error: t, k, n, and p must be integers.")
         sys.exit(1)
 
-    print(f"--- DIMY Node Started ---")
+    print("--- DIMY Node Started ---")
     print(f"Parameters: t={t}, k={k}, n={n}, p={p}%")
-
+    udp_handler.start_listener(k, p, own_ephid_hashes)
+    print("[Main] UDP listener started.")
+    threading.Thread(target=task_5_encounter_loop, daemon=True).start()
+    print("[Main] Encounter loop started.")
     # Start the Task 1 Heartbeat in a background thread
     # This allows the main thread to handle UDP listening later (Task 3/4)
     multithread = threading.Thread(target=task_1_heartbeat, args=(t, k, n), daemon=True)
@@ -63,6 +74,22 @@ def main():
             time.sleep(1)
     except KeyboardInterrupt:
         print("\nNode shutting down...")
-
+def task_5_encounter_loop():
+    while True:
+        their_ephid = udp_handler.pop_reconstructed_ephid()
+        if their_ephid is not None:
+            with current_ephid_lock:
+                our_ephid = current_ephid
+            if our_ephid is None:
+                print("[Task 5] Skipping — no current EphID yet.")
+            elif their_ephid == our_ephid:
+                print("[Task 5] Skipping — reconstructed our own EphID, ignoring.")
+            else:
+                encID = crypto_utils.compute_encid(our_ephid, their_ephid)
+                with pending_encids_lock:
+                    pending_encids.append(encID)
+                    print(f"[Task 5] EncID stored. Total pending: {len(pending_encids)}")            
+                #TODO Task 6: dbf_manager.add_encid(encID)
+        time.sleep(1)
 if __name__ == "__main__":
     main()

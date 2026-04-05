@@ -16,3 +16,5 @@ MAX_DBFS = 6
 
 # We need a large Prime for the finite field (Mersenne prime)
 PRIME = 2**521 - 1 
+DH_PRIME      = PRIME
+DH_GENERATOR  = 2
