@@ -64,6 +64,8 @@ def main():
     print("[Main] UDP listener started.")
     dbf_manager.initialise_dbf()
     print("[Main] DBF initialised.")
+    dbf_manager.start_dbf_rotation(t)    # Task 7
+    print("[Main] DBF rotation started.")
     threading.Thread(target=task_5_encounter_loop, daemon=True).start()
     print("[Main] Encounter loop started.")
     # Start the Task 1 Heartbeat in a background thread

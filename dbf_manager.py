@@ -120,3 +120,85 @@ def add_encid(encid_bytes):
         # EncID deleted from memory — it only lives in the bloom filter now
         encid_bytes = None
         print(f"[Task 6]   EncID deleted from memory.")
+
+# ============================================================
+# TASK 7 — DBF ROTATION
+# ============================================================
+
+def start_dbf_rotation(t):
+    """
+    Task 7: Seal current DBF and start a new one every t*6 seconds.
+    Keep at most MAX_DBFS (6) DBFs. Delete any older than Dt minutes.
+    Dt = (t * 6 * 6) / 60 minutes
+
+    Called once from Dimy.py on startup.
+    """
+    dbf_window  = t * 6          # seconds per DBF
+    dt_seconds  = t * 6 * 6     # max age in seconds before deletion
+    dt_minutes  = dt_seconds / 60
+
+    print(f"[Task 7] DBF rotation started.")
+    print(f"[Task 7]   New DBF every  : {dbf_window} seconds")
+    print(f"[Task 7]   Max DBFs stored: {MAX_DBFS}")
+    print(f"[Task 7]   DBF max age    : {dt_minutes:.1f} minutes ({dt_seconds}s)")
+
+    def rotation_loop():
+        while True:
+            time.sleep(dbf_window)
+            _rotate_dbf(dt_seconds)
+
+    threading.Thread(target=rotation_loop, daemon=True).start()
+
+
+def _rotate_dbf(dt_seconds):
+    """
+    Seal the current DBF, delete expired ones, start a fresh one.
+    Called internally by the rotation loop.
+    """
+    global current_dbf
+
+    with dbf_lock:
+        now = time.time()
+
+        # --- Delete DBFs older than Dt seconds ---
+        before_count = len(dbf_list)
+        expired = [dbf for dbf in dbf_list
+                   if (now - dbf['created_at']) > dt_seconds]
+        for dbf in expired:
+            dbf_list.remove(dbf)
+        expired_count = before_count - len(dbf_list)
+
+        if expired_count > 0:
+            print(f"\n[Task 7] Deleted {expired_count} expired DBF(s).")
+
+        # --- Enforce MAX_DBFS cap ---
+        # If still over the limit after expiry, remove oldest first
+        while len(dbf_list) >= MAX_DBFS:
+            removed = dbf_list.pop(0)
+            print(f"[Task 7] Max DBF cap reached — removed oldest DBF "
+                  f"(had {removed['encid_count']} EncIDs).")
+
+        # --- Create and register new DBF ---
+        current_dbf = _new_dbf()
+        dbf_list.append(current_dbf)
+
+        print(f"\n[Task 7] New DBF created. Total DBFs stored: {len(dbf_list)}")
+        print(f"[Task 7]   DBF ages: "
+              f"{[round(now - d['created_at'], 1) for d in dbf_list]} seconds old")
+        print(f"[Task 7]   EncIDs per DBF: "
+              f"{[d['encid_count'] for d in dbf_list]}")
+
+
+def get_all_dbfs():
+    """
+    Returns a copy of all current DBF bytearrays.
+    Used by Task 8 (QBF) and Task 9 (CBF).
+    """
+    with dbf_lock:
+        return [bytes(dbf['filter']) for dbf in dbf_list]
+
+
+def get_dbf_count():
+    """Returns how many DBFs are currently stored."""
+    with dbf_lock:
+        return len(dbf_list)
