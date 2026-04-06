@@ -1,3 +1,4 @@
+import dbf_manager
 import sys
 import time
 import threading
@@ -61,6 +62,8 @@ def main():
     print(f"Parameters: t={t}, k={k}, n={n}, p={p}%")
     udp_handler.start_listener(k, p, own_ephid_hashes)
     print("[Main] UDP listener started.")
+    dbf_manager.initialise_dbf()
+    print("[Main] DBF initialised.")
     threading.Thread(target=task_5_encounter_loop, daemon=True).start()
     print("[Main] Encounter loop started.")
     # Start the Task 1 Heartbeat in a background thread
@@ -86,10 +89,7 @@ def task_5_encounter_loop():
                 print("[Task 5] Skipping — reconstructed our own EphID, ignoring.")
             else:
                 encID = crypto_utils.compute_encid(our_ephid, their_ephid)
-                with pending_encids_lock:
-                    pending_encids.append(encID)
-                    print(f"[Task 5] EncID stored. Total pending: {len(pending_encids)}")            
-                #TODO Task 6: dbf_manager.add_encid(encID)
+                dbf_manager.add_encid(encID)  # Task 6
         time.sleep(1)
 if __name__ == "__main__":
     main()
