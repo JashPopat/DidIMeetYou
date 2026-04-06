@@ -202,3 +202,46 @@ def get_dbf_count():
     """Returns how many DBFs are currently stored."""
     with dbf_lock:
         return len(dbf_list)
+    
+# ============================================================
+# TASK 8 — BUILD QBF FROM ALL DBFS
+# ============================================================
+
+def build_qbf():
+    """
+    Task 8: Merge all current DBFs into a single Query Bloom Filter.
+    Called every Dt minutes by a background timer in Dimy.py.
+    Returns the QBF as bytes.
+    """
+    with dbf_lock:
+        if not dbf_list:
+            print("[Task 8] No DBFs available to build QBF.")
+            return None
+
+        all_filters = [dbf['filter'] for dbf in dbf_list]
+        qbf = bloom_merge(all_filters)
+
+        total_encids = sum(d['encid_count'] for d in dbf_list)
+        print(f"\n[Task 8] QBF built from {len(dbf_list)} DBF(s).")
+        print(f"[Task 8]   Total EncIDs across all DBFs: {total_encids}")
+        print(f"[Task 8]   Bits set in QBF: {count_set_bits(qbf)}")
+
+        return bytes(qbf)
+
+
+def start_qbf_timer(t):
+    """
+    Task 8: Every Dt minutes, build QBF and store it for Task 10.
+    Dt = (t * 6 * 6) / 60 minutes = t * 6 seconds (same as one DBF window)
+    """
+    dt_seconds = t * 6 * 6
+
+    print(f"[Task 8] QBF timer started. Building QBF every "
+          f"{dt_seconds}s ({dt_seconds/60:.1f} min).")
+
+    def qbf_loop():
+        while True:
+            time.sleep(dt_seconds)
+            build_qbf()
+
+    threading.Thread(target=qbf_loop, daemon=True).start()

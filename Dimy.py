@@ -66,6 +66,8 @@ def main():
     print("[Main] DBF initialised.")
     dbf_manager.start_dbf_rotation(t)    # Task 7
     print("[Main] DBF rotation started.")
+    dbf_manager.start_qbf_timer(t)      # Task 8
+    print("[Main] QBF timer started.")
     threading.Thread(target=task_5_encounter_loop, daemon=True).start()
     print("[Main] Encounter loop started.")
     # Start the Task 1 Heartbeat in a background thread
