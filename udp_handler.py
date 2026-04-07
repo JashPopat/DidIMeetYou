@@ -59,6 +59,9 @@ def start_listener(k, p, own_hashes=None):
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
             # SO_REUSEADDR allows multiple nodes on same machine to share this port
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            # Mac seems to have issues with the port reuse so I added this in - Jash
+            if hasattr(socket, 'SO_REUSEPORT'):
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
             sock.bind(('', 5000))
             print(f"[Task 3a] Listening for UDP shares on port 5000 "
                   f"(drop probability: {p}%)")

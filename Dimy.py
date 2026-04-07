@@ -5,6 +5,8 @@ import threading
 from config import *
 import crypto_utils
 import udp_handler
+import dbf_manager
+import tcp_client
 current_ephid      = None
 current_ephid_lock = threading.Lock()
 pending_encids      = []
@@ -77,10 +79,40 @@ def main():
 
     # Keep the main thread alive
     try:
+        print("\n>>> NODE ONLINE. Type 'positive' to report infection. <<<")
         while True:
+            user_input = input().strip().lower()
+            if user_input == 'positive':
+                # 1. Build the CBF (Task 9)
+                cbf_data = dbf_manager.build_cbf() 
+                if cbf_data:
+                    # 2. Upload via TCP (Task 9)
+                    import tcp_client
+                    print("[Task 9] Uploading CBF to server...")
+                    response = tcp_client.upload_to_server(cbf_data, is_cbf=True)
+                    print(f"[Task 9] Server response: {response}")
+                    
+                    # 3. Stop QBF generation (Task 9 requirement)
+                    # You can set a global flag or simply exit the loop
+                    print("[Task 9] Node entering positive state. Stopping QBFs.")
+                    break 
             time.sleep(1)
     except KeyboardInterrupt:
         print("\nNode shutting down...")
+
+def handle_positive_diagnosis():
+    """
+    Logic for Task 9: 
+    Combine DBFs into a Contact Bloom Filter (CBF)
+    Upload CBF to the server via TCP
+    """
+
+    cbf_data = dbf_manager.build_cbf()
+    if cbf_data:
+        # Task 9: Upload via TCP to port 55000
+        response = tcp_client.upload_to_server(cbf_data, is_cbf=True)
+        print(f"[Task 9] Server Confirmation: {response}")
+
 def task_5_encounter_loop():
     while True:
         their_ephid = udp_handler.pop_reconstructed_ephid()
@@ -95,5 +127,23 @@ def task_5_encounter_loop():
                 encID = crypto_utils.compute_encid(our_ephid, their_ephid)
                 dbf_manager.add_encid(encID)  # Task 6
         time.sleep(1)
+
+def check_for_positive_status():
+    """
+    Task 9: Listen for a manual trigger (like typing 'positive') 
+    to simulate a diagnosis.
+    """
+    while True:
+        cmd = input("\nType 'positive' to report infection: ").strip().lower()
+        if cmd == 'positive':
+            print("[Task 9] User diagnosed positive. Generating CBF...")
+            cbf_data = dbf_manager.build_cbf()
+            if cbf_data:
+                import tcp_client
+                tcp_client.upload_to_server(cbf_data, is_cbf=True)
+                print("[Task 9] Node will now stop generating QBFs.")
+                # You would set a global flag here to stop the Task 8 loop
+                break
+
 if __name__ == "__main__":
     main()

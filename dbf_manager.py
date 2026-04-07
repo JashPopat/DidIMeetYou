@@ -245,3 +245,16 @@ def start_qbf_timer(t):
             build_qbf()
 
     threading.Thread(target=qbf_loop, daemon=True).start()
+
+def build_cbf():
+    """
+    Task 9: Combine all DBFs into a Contact Bloom Filter (CBF).
+    """
+    with dbf_lock:
+        if not dbf_list:
+            return None
+        # CBF is essentially a QBF uploaded by a positive user
+        all_filters = [dbf['filter'] for dbf in dbf_list]
+        cbf = bloom_merge(all_filters)
+        print(f"[Task 9] CBF prepared from {len(dbf_list)} DBFs.")
+        return bytes(cbf)
