@@ -228,24 +228,6 @@ def build_qbf():
 
         return bytes(qbf)
 
-
-def start_qbf_timer(t):
-    """
-    Task 8: Every Dt minutes, build QBF and store it for Task 10.
-    Dt = (t * 6 * 6) / 60 minutes = t * 6 seconds (same as one DBF window)
-    """
-    dt_seconds = t * 6 * 6
-
-    print(f"[Task 8] QBF timer started. Building QBF every "
-          f"{dt_seconds}s ({dt_seconds/60:.1f} min).")
-
-    def qbf_loop():
-        while True:
-            time.sleep(dt_seconds)
-            build_qbf()
-
-    threading.Thread(target=qbf_loop, daemon=True).start()
-
 def build_cbf():
     """
     Task 9: Combine all DBFs into a Contact Bloom Filter (CBF).

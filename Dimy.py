@@ -68,10 +68,10 @@ def main():
     print("[Main] DBF initialised.")
     dbf_manager.start_dbf_rotation(t)    # Task 7
     print("[Main] DBF rotation started.")
-    dbf_manager.start_qbf_timer(t)      # Task 8
-    print("[Main] QBF timer started.")
     threading.Thread(target=task_5_encounter_loop, daemon=True).start()
     print("[Main] Encounter loop started.")
+    threading.Thread(target=task_10_qbf_sync_loop, args=(t,), daemon=True).start()
+    print("[Main] Task 10 QBF sync loop started.")
     # Start the Task 1 Heartbeat in a background thread
     # This allows the main thread to handle UDP listening later (Task 3/4)
     multithread = threading.Thread(target=task_1_heartbeat, args=(t, k, n), daemon=True)
@@ -144,6 +144,28 @@ def check_for_positive_status():
                 print("[Task 9] Node will now stop generating QBFs.")
                 # You would set a global flag here to stop the Task 8 loop
                 break
+
+def task_10_qbf_sync_loop(t):
+    # Dt calculation: every (t * 6 * 6) / 60 minutes
+    dt_seconds = 30
+    while True:
+        time.sleep(dt_seconds)
+        
+        # Build the QBF from current DBFs (Task 8)
+        qbf_data = dbf_manager.build_qbf()
+        
+        if qbf_data:
+            print("[Task 10] Sending QBF to backend for risk analysis...")
+            # Upload via TCP to port 55000 (Task 10)
+            import tcp_client
+            result = tcp_client.upload_to_server(qbf_data, is_cbf=False)
+            
+            # Segment 10-B: Display results to the user
+            print(f"[Task 10] Result from server: {result.upper()}")
+            
+            # If "matched", Task 8 says to store QBF separately for HA
+            if result.lower() == "matched":
+                print("[Task 10] Notification: You have been in close contact with a positive case!")
 
 if __name__ == "__main__":
     main()
