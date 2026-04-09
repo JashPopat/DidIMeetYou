@@ -1,32 +1,22 @@
 import random
 from config import EPHID_SIZE, PRIME
 
+# Task 2: Create n shares from the EphID
+
 def split_id(ephid_bytes, k, n):
-    """
-    Task 2: Create n shares from the EphID. 
-    Any k shares can reconstruct it.
-    """
     secret = int.from_bytes(ephid_bytes, 'big')
-    
-    # Generate random coefficients for the polynomial of degree k-1
-    # f(x) = secret + c1*x + c2*x^2 ...
     coefficients = [secret] + [random.SystemRandom().randrange(PRIME) for _ in range(k - 1)]
     
     shares = []
     for x in range(1, n + 1):
-        # Calculate f(x)
         y = 0
         for power, coeff in enumerate(coefficients):
             y = (y + coeff * (x**power)) % PRIME
-        shares.append((x, y)) # (x, y) is the share
+        shares.append((x, y))
     return shares
 
 def reconstruct_id(shares):
-    """
-    Task 4: Use Lagrange Interpolation to find the secret (constant term).
-    """
-    def _lagrange_interpolation(x, x_s, y_s):
-        # Implementation of Lagrange polynomial to find f(0)
+    def lagrange(x, x_s, y_s):
         total = 0
         n = len(x_s)
         for i in range(n):
@@ -40,5 +30,5 @@ def reconstruct_id(shares):
         return total
 
     x_s, y_s = zip(*shares)
-    secret_int = _lagrange_interpolation(0, x_s, y_s)
+    secret_int = lagrange(0, x_s, y_s)
     return secret_int.to_bytes(EPHID_SIZE, 'big')

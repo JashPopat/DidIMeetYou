@@ -15,10 +15,9 @@ def run_server():
         while True:
             conn, addr = s.accept()
             with conn:
-                # --- NEW: Loop to receive ALL data ---
                 full_data = b""
                 while True:
-                    chunk = conn.recv(4096) # Read in small chunks
+                    chunk = conn.recv(4096)
                     if not chunk:
                         break
                     full_data += chunk
@@ -36,15 +35,12 @@ def run_server():
                         print(f"\n[Task 9] Successfully stored CBF from {addr}")
                         conn.sendall(b"CBF Upload Successful")
 
-                    # Inside the run_server() while loop in DimyServer.py
                     if payload['type'] == 'QBF':
                         qbf_bytes = base64.b64decode(payload['data'])
                         match_found = False
                         
-                        # Task 10: Perform matching
+                        # Task 10
                         for stored_cbf in stored_cbfs:
-                            # We perform a bitwise AND. If the result equals the QBF, 
-                            # it means all '1' bits in the QBF were also '1' in the CBF.
                             is_match = True
                             for i in range(len(qbf_bytes)):
                                 if (qbf_bytes[i] & stored_cbf[i]) != qbf_bytes[i]:

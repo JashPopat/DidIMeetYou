@@ -7,16 +7,17 @@ import crypto_utils
 import udp_handler
 import dbf_manager
 import tcp_client
+
 current_ephid      = None
 current_ephid_lock = threading.Lock()
 pending_encids      = []
 pending_encids_lock = threading.Lock()
 own_ephid_hashes = set()
-def task_1_heartbeat(t, k, n):
-    """
-    This loop runs in the background, generating a new EphID 
-    every 't' seconds and passing it to the secret sharing logic.
-    """
+
+# Task 1-3: Generate EphID, split into shares, and broadcast via UDP
+
+def task123_loop(t, k, n):
+
     global current_ephid
     while True:
         # Task 1: Generate 32-Byte EphID
@@ -25,7 +26,7 @@ def task_1_heartbeat(t, k, n):
             current_ephid = ephid
         print(f"\n[Task 1] Generated New 32-Byte EphID: {ephid.hex()[:10]}...")
 
-        # Task 2: Split into n shares (Logic to be written in crypto_utils)
+        # Task 2: Split into n shares
         shares, ephid_hash = crypto_utils.get_shares_for_broadcast(ephid, k, n)
         own_ephid_hashes.add(ephid_hash)
         print(f"[Task 2] Generated {n} shares (k={k}). Verification Hash: {ephid_hash}")
@@ -36,12 +37,10 @@ def task_1_heartbeat(t, k, n):
         time.sleep(t)
 
 def main():
-    # Validating command line arguments: python3 Dimy.py [t] [k] [n] [p] [Server_IP] [Server_Port]
     if len(sys.argv) < 5:
         print("Usage: python3 Dimy.py [t] [k] [n] [p]")
         sys.exit(1)
 
-    # Parsing arguments
     try:
         t = int(sys.argv[1])
         k = int(sys.argv[2])
@@ -72,28 +71,21 @@ def main():
     print("[Main] Encounter loop started.")
     threading.Thread(target=task_10_qbf_sync_loop, args=(t,), daemon=True).start()
     print("[Main] Task 10 QBF sync loop started.")
-    # Start the Task 1 Heartbeat in a background thread
-    # This allows the main thread to handle UDP listening later (Task 3/4)
-    multithread = threading.Thread(target=task_1_heartbeat, args=(t, k, n), daemon=True)
+    multithread = threading.Thread(target=task123_loop, args=(t, k, n), daemon=True)
     multithread.start()
 
-    # Keep the main thread alive
     try:
         print("\n>>> NODE ONLINE. Type 'positive' to report infection. <<<")
         while True:
             user_input = input().strip().lower()
             if user_input == 'positive':
-                # 1. Build the CBF (Task 9)
+                # Task 9
                 cbf_data = dbf_manager.build_cbf() 
                 if cbf_data:
-                    # 2. Upload via TCP (Task 9)
                     import tcp_client
                     print("[Task 9] Uploading CBF to server...")
                     response = tcp_client.upload_to_server(cbf_data, is_cbf=True)
                     print(f"[Task 9] Server response: {response}")
-                    
-                    # 3. Stop QBF generation (Task 9 requirement)
-                    # You can set a global flag or simply exit the loop
                     print("[Task 9] Node entering positive state. Stopping QBFs.")
                     break 
             time.sleep(1)
@@ -101,15 +93,8 @@ def main():
         print("\nNode shutting down...")
 
 def handle_positive_diagnosis():
-    """
-    Logic for Task 9: 
-    Combine DBFs into a Contact Bloom Filter (CBF)
-    Upload CBF to the server via TCP
-    """
-
     cbf_data = dbf_manager.build_cbf()
     if cbf_data:
-        # Task 9: Upload via TCP to port 55000
         response = tcp_client.upload_to_server(cbf_data, is_cbf=True)
         print(f"[Task 9] Server Confirmation: {response}")
 
@@ -129,10 +114,6 @@ def task_5_encounter_loop():
         time.sleep(1)
 
 def check_for_positive_status():
-    """
-    Task 9: Listen for a manual trigger (like typing 'positive') 
-    to simulate a diagnosis.
-    """
     while True:
         cmd = input("\nType 'positive' to report infection: ").strip().lower()
         if cmd == 'positive':
@@ -142,28 +123,21 @@ def check_for_positive_status():
                 import tcp_client
                 tcp_client.upload_to_server(cbf_data, is_cbf=True)
                 print("[Task 9] Node will now stop generating QBFs.")
-                # You would set a global flag here to stop the Task 8 loop
                 break
 
 def task_10_qbf_sync_loop(t):
-    # Dt calculation: every (t * 6 * 6) / 60 minutes
-    dt_seconds = 30
+    dt_seconds = 30  # Dt calculation: every (t * 6 * 6) / 60 minutes - changed for TESTING only
     while True:
         time.sleep(dt_seconds)
-        
-        # Build the QBF from current DBFs (Task 8)
         qbf_data = dbf_manager.build_qbf()
         
         if qbf_data:
             print("[Task 10] Sending QBF to backend for risk analysis...")
-            # Upload via TCP to port 55000 (Task 10)
+            # Task 10
             import tcp_client
             result = tcp_client.upload_to_server(qbf_data, is_cbf=False)
-            
-            # Segment 10-B: Display results to the user
             print(f"[Task 10] Result from server: {result.upper()}")
             
-            # If "matched", Task 8 says to store QBF separately for HA
             if result.lower() == "matched":
                 print("[Task 10] Notification: You have been in close contact with a positive case!")
 

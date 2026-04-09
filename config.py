@@ -9,7 +9,7 @@ SERVER_PORT = 55000
 EPHID_SIZE = 32
 
 #broadcast these n shares @ 1 unique share per 3 seconds
-SHARE_BROADCAST_INTERVAL = 3   # seconds
+SHARE_BROADCAST_INTERVAL = 3
 
 #each node stores at most 6 DBFs
 MAX_DBFS = 6
