@@ -129,7 +129,7 @@ def check_for_positive_status():
                 break
 
 def task_10_qbf_sync_loop(t):
-    dt_seconds = 30  # Dt calculation: every (t * 6 * 6) / 60 minutes - changed for TESTING only
+    dt_seconds = (t * 6 * 6) / 60  # Dt calculation: every (t * 6 * 6) / 60 minutes - changed for TESTING only
     while True:
         time.sleep(dt_seconds)
         qbf_data = dbf_manager.build_qbf()

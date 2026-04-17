@@ -39,15 +39,20 @@ def run_server():
                         qbf_bytes = base64.b64decode(payload['data'])
                         match_found = False
                         
-                        # Task 10
+                        # Task 10: Perform overlap matching
                         for stored_cbf in stored_cbfs:
-                            is_match = True
+                            overlap_bits = 0
+                            
+                            # Perform bitwise AND to find the intersection
                             for i in range(len(qbf_bytes)):
-                                if (qbf_bytes[i] & stored_cbf[i]) != qbf_bytes[i]:
-                                    is_match = False
+                                # Count the '1's in the intersection of this byte
+                                overlap_bits += bin(qbf_bytes[i] & stored_cbf[i]).count('1')
+                                
+                                # Early exit: If we've found at least 3 overlapping bits, it's a match!
+                                if overlap_bits >= 3: 
                                     break
                             
-                            if is_match:
+                            if overlap_bits >= 3:
                                 match_found = True
                                 break
                                 
