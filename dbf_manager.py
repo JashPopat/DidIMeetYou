@@ -70,19 +70,19 @@ def initialise_dbf():
 def add_encid(encid_bytes):
     with dbf_lock:
         if current_dbf is None:
-            print("[Task 6] ERROR — no active DBF, call initialise_dbf() first.")
+            print("[Task 6] ERROR — no active DBF")
             return
 
         positions = bloom_insert(current_dbf['filter'], encid_bytes)
         current_dbf['encid_count'] += 1
 
         print(f"\n[Task 6] EncID inserted into DBF.")
-        print(f"[Task 6]   Bit positions set : {positions}")
-        print(f"[Task 6]   EncIDs in this DBF: {current_dbf['encid_count']}")
-        print(f"[Task 6]   Bits set in DBF   : {count_set_bits(current_dbf['filter'])}")
+        print(f"[Task 6] Bit positions set : {positions}")
+        print(f"[Task 6] EncIDs in this DBF : {current_dbf['encid_count']}")
+        print(f"[Task 6] Bits set in DBF : {count_set_bits(current_dbf['filter'])}")
 
         encid_bytes = None
-        print(f"[Task 6]   EncID deleted from memory.")
+        print(f"[Task 6] EncID deleted from memory.")
 
 # Task 7 — DBF Rotation
 
@@ -93,9 +93,9 @@ def start_dbf_rotation(t):
     dt_minutes  = dt_seconds / 60
 
     print(f"[Task 7] DBF rotation started.")
-    print(f"[Task 7]   New DBF every  : {dbf_window} seconds")
-    print(f"[Task 7]   Max DBFs stored: {MAX_DBFS}")
-    print(f"[Task 7]   DBF max age    : {dt_minutes:.1f} minutes ({dt_seconds}s)")
+    print(f"[Task 7] New DBF every : {dbf_window} seconds")
+    print(f"[Task 7] Max DBFs stored : {MAX_DBFS}")
+    print(f"[Task 7] DBF max age : {dt_minutes:.1f} minutes ({dt_seconds}s)")
 
     def rotation_loop():
         while True:
@@ -135,18 +135,11 @@ def _rotate_dbf(dt_seconds):
         print(f"[Task 7]   EncIDs per DBF: "
               f"{[d['encid_count'] for d in dbf_list]}")
 
-
 def get_all_dbfs():
-    """
-    Returns a copy of all current DBF bytearrays.
-    Used by Task 8 (QBF) and Task 9 (CBF).
-    """
     with dbf_lock:
         return [bytes(dbf['filter']) for dbf in dbf_list]
 
-
 def get_dbf_count():
-    """Returns how many DBFs are currently stored."""
     with dbf_lock:
         return len(dbf_list)
     
@@ -163,8 +156,8 @@ def build_qbf():
 
         total_encids = sum(d['encid_count'] for d in dbf_list)
         print(f"\n[Task 8] QBF built from {len(dbf_list)} DBF(s).")
-        print(f"[Task 8]   Total EncIDs across all DBFs: {total_encids}")
-        print(f"[Task 8]   Bits set in QBF: {count_set_bits(qbf)}")
+        print(f"[Task 8] Total EncIDs across all DBFs: {total_encids}")
+        print(f"[Task 8] Bits set in QBF: {count_set_bits(qbf)}")
 
         return bytes(qbf)
 

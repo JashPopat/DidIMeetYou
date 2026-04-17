@@ -24,7 +24,7 @@ def task123_loop(t, k, n):
         ephid = crypto_utils.generate_ephid()
         with current_ephid_lock:
             current_ephid = ephid
-        print(f"\n[Task 1] Generated New 32-Byte EphID: {ephid.hex()[:10]}...")
+        print(f"\n[Task 1] Generated New 32-Byte EphID: {ephid.hex()[:10]}")
 
         # Task 2: Split into n shares
         shares, ephid_hash = crypto_utils.get_shares_for_broadcast(ephid, k, n)
@@ -59,7 +59,9 @@ def main():
         print("Error: t, k, n, and p must be integers.")
         sys.exit(1)
 
-    print("--- DIMY Node Started ---")
+    print("--------------------------------")
+    print("------- DIMY Node Active -------")
+    print("--------------------------------")
     print(f"Parameters: t={t}, k={k}, n={n}, p={p}%")
     udp_handler.start_listener(k, p, own_ephid_hashes)
     print("[Main] UDP listener started.")
@@ -75,7 +77,8 @@ def main():
     multithread.start()
 
     try:
-        print("\n>>> NODE ONLINE. Type 'positive' to report infection. <<<")
+        print("\n>>> ---------- NODE ONLINE ------------ <<<")
+        print(">>>Type 'positive' to report infection. <<<\n")
         while True:
             user_input = input().strip().lower()
             if user_input == 'positive':
@@ -107,7 +110,7 @@ def task_5_encounter_loop():
             if our_ephid is None:
                 print("[Task 5] Skipping — no current EphID yet.")
             elif their_ephid == our_ephid:
-                print("[Task 5] Skipping — reconstructed our own EphID, ignoring.")
+                print("[Task 5] Skipping — reconstructed own EphID, ignoring.")
             else:
                 encID = crypto_utils.compute_encid(our_ephid, their_ephid)
                 dbf_manager.add_encid(encID)  # Task 6
@@ -122,7 +125,7 @@ def check_for_positive_status():
             if cbf_data:
                 import tcp_client
                 tcp_client.upload_to_server(cbf_data, is_cbf=True)
-                print("[Task 9] Node will now stop generating QBFs.")
+                print("[Task 9] Stopping generation of QBFs.")
                 break
 
 def task_10_qbf_sync_loop(t):
@@ -132,7 +135,7 @@ def task_10_qbf_sync_loop(t):
         qbf_data = dbf_manager.build_qbf()
         
         if qbf_data:
-            print("[Task 10] Sending QBF to backend for risk analysis...")
+            print("[Task 10] Sending QBF to backend...")
             # Task 10
             import tcp_client
             result = tcp_client.upload_to_server(qbf_data, is_cbf=False)

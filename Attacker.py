@@ -8,7 +8,9 @@ import string
 import threading
 
 def run_attacker():
+    print("---------------------------------")
     print("--- DIMY Attacker Node Active ---")
+    print("---------------------------------")
     print("[Info] Listening for all UDP broadcasts on port 5000...")
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:

@@ -109,7 +109,7 @@ def _attempt_reconstruction(ephid_hash, shares):
             # Success
             print(f"[Task 4] EphID reconstruction DONE. "
                   f"EphID: {reconstructed_ephid.hex()[:6]}")
-            print(f"[Task 4] Hash verified ✓  "
+            print(f"[Task 4] Hash verified — reconstruction SUCCESSFUL. "
                   f"expected={ephid_hash[:8]}  computed={computed_hash[:8]}")
  
             # Store reconstructed EphID

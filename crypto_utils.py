@@ -28,8 +28,8 @@ def compute_encid(our_ephid, their_ephid):
     encID = hashlib.sha256(shared_secret.to_bytes((shared_secret.bit_length() + 7) // 8, byteorder='big')).digest()
 
     print("\n[Task 5] Diffie-Hellman complete.")
-    print(f"[Task 5]   Our EphID  : {our_ephid.hex()[:10]}...")
-    print(f"[Task 5]   Their EphID: {their_ephid.hex()[:10]}...")
-    print(f"[Task 5] EncID        : {encID.hex()[:10]}...")
+    print(f"[Task 5] Our EphID : {our_ephid.hex()[:10]}...")
+    print(f"[Task 5] Their EphID : {their_ephid.hex()[:10]}...")
+    print(f"[Task 5] EncID : {encID.hex()[:10]}...")
 
     return encID
